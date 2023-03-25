@@ -32,29 +32,61 @@ class SVM():
     SVM模型。
     """
 
-    def __init__(self):
+    def __init__(self, learning_rate=0.0001, max_iter=1000, C=0.5, tol=1e-3):
         # 请补全此处代码
-        pass
+        self.lr = learning_rate   # 学习率
+        self.C = C                # 惩罚系数
+        self.max_iter = max_iter  # 最大迭代次数
+        self.tol = tol            # 迭代终止条件
+        self.W = None             # 参数
+
+
 
     def train(self, data_train):
         """
         训练模型。
         """
-
         # 请补全此处代码
+        x = data_train[:, :2]  # feature [x1, x2]
+        y = data_train[:, 2]  # 真实标签
+
+        # 初始化参数
+        self.W = np.zeros(x.shape[1])
+        b = 0
+        n_samples, n_features = x.shape
+
+        # 迭代更新参数
+        for epoch in range(self.max_iter):
+            for i in range(n_samples):
+                condition = y[i] * (np.dot(x[i], self.W) - b ) >= 1
+                if condition:
+                    self.W -= self.lr * (2 * self.C * np.dot(self.W, x[i]))
+                else:
+                    self.W -= self.lr * (2 * self.C * np.dot(self.W, x[i]) - np.dot(y[i], x[i]))
+                    b -= self.lr * y[i]
+                
+            if epoch % 100 == 0:
+                loss = self.C * np.dot(self.W, self.W) + np.sum(1 - y * (np.dot(x, self.W) - b))
+                print(f"Epoch {epoch} Loss: {loss}")
+            
+            if np.linalg.norm(self.lr * (2 * self.C * np.dot(self.W, x.T) - y * (np.dot(self.W, x.T) + b))) < self.tol:
+                break
+
+        self.W = np.concatenate((self.W, np.array([b])))
 
     def predict(self, x):
         """
         预测标签。
         """
-
         # 请补全此处代码
+        pred = np.dot(x, self.W[:-1]) - self.W[-1]
+        return np.sign(pred)
 
 
 if __name__ == '__main__':
     # 载入数据，实际实用时将x替换为具体名称
-    train_file = 'data/train_linear.txt'
-    test_file = 'data/test_linear.txt'
+    train_file = 'D:\Github Space\\nndl-exercise\chap3_SVM\data\\train_linear.txt'
+    test_file = 'D:\Github Space\\nndl-exercise\chap3_SVM\data\\test_linear.txt'
     data_train = load_data(train_file)  # 数据格式[x1, x2, t]
     data_test = load_data(test_file)
 
